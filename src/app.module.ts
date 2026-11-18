@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
- import { ConfigModule } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 
 @Module({
@@ -11,7 +12,8 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
       isGlobal: true
     }),
 
-    CloudinaryModule],
+    CloudinaryModule,
+    PrismaModule],
   controllers: [AppController],
   providers: [AppService],
 })

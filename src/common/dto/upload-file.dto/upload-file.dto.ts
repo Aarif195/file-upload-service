@@ -9,3 +9,6 @@ export class UploadFileDto {
   @IsString()
   batchId?: string;
 }
+
+
+
