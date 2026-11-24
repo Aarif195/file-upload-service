@@ -94,4 +94,23 @@ export class UploadService {
     };
   }
 
+// getFilesByBatchId
+async getFilesByBatchId(batchId: string) {
+  const files = await this.prisma.fileMetadata.findMany({
+    where: { batchId },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (!files.length) {
+    throw new NotFoundException(`No files found for batch ID ${batchId}`);
+  }
+
+  return {
+    message: 'Batch files retrieved successfully',
+    batchId,
+    count: files.length,
+    data: files,
+  };
+}
+
 }

@@ -19,9 +19,9 @@ import { UploadFileDto } from 'src/common/dto/upload-file.dto/upload-file.dto';
 
 @Controller('upload')
 export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(private readonly uploadService: UploadService) { }
 
-//   uploadSingleFile
+  //   uploadSingleFile
   @Post('single')
   @UseInterceptors(FileInterceptor('file'))
   async uploadSingle(
@@ -31,7 +31,7 @@ export class UploadController {
     return await this.uploadService.uploadSingleFile(file, dto);
   }
 
-//   uploadMultipleFiles
+  //   uploadMultipleFiles
   @Post('multiple')
   @HttpCode(HttpStatus.ACCEPTED)
   @UseInterceptors(FilesInterceptor('files', 10)) // Max 10 files per batch
@@ -42,15 +42,22 @@ export class UploadController {
     return await this.uploadService.uploadMultipleFiles(files, dto);
   }
 
-//   getAllFiles
+  //   getAllFiles
   @Get('files')
   async listFiles() {
     return await this.uploadService.getAllFiles();
   }
 
-// getFileById
-@Get('files/:id')
+  // getFileById
+  @Get('files/:id')
   async getFile(@Param('id') id: string) {
     return await this.uploadService.getFileById(id);
   }
+
+  // getFilesByBatchId
+  @Get('batch/:batchId')
+  async getBatchFiles(@Param('batchId') batchId: string) {
+    return await this.uploadService.getFilesByBatchId(batchId);
+  }
+
 }
