@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { randomUUID } from 'crypto';
@@ -85,7 +85,7 @@ export class UploadService {
     });
 
     if (!file) {
-      throw new Error(`File with ID ${id} not found`);
+      throw new NotFoundException (`File with ID ${id} not found`);
     }
 
     return {
