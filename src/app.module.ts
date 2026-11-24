@@ -4,8 +4,6 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { PrismaModule } from './prisma/prisma.module';
-import { UploadController } from './upload/upload.controller';
-import { UploadService } from './upload/upload.service';
 import { UploadModule } from './upload/upload.module';
 import { BullModule } from '@nestjs/bullmq';
 
@@ -15,7 +13,7 @@ import { BullModule } from '@nestjs/bullmq';
     ConfigModule.forRoot({
       isGlobal: true
     }),
-BullModule.forRootAsync({
+    BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
@@ -34,7 +32,7 @@ BullModule.forRootAsync({
     CloudinaryModule,
     PrismaModule,
     UploadModule],
-  controllers: [AppController, UploadController],
-  providers: [AppService, UploadService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule { }

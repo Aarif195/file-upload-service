@@ -4,12 +4,13 @@ import { UploadController } from './upload.controller';
 import { UploadService } from './upload.service';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { PrismaModule } from '../prisma/prisma.module';
+import { UploadProcessor } from './upload.processor';
+import { FILE_UPLOAD_QUEUE } from './upload.constants';
 
-export const FILE_UPLOAD_QUEUE = 'file-upload';
 
 @Module({
-    imports: [CloudinaryModule, PrismaModule,
-        BullModule.registerQueue({
+  imports: [CloudinaryModule, PrismaModule,
+    BullModule.registerQueue({
       name: FILE_UPLOAD_QUEUE,
       defaultJobOptions: {
         attempts: 3,
@@ -21,8 +22,8 @@ export const FILE_UPLOAD_QUEUE = 'file-upload';
         removeOnFail: false,
       },
     }),
-    ],
-    controllers: [UploadController],
-    providers: [UploadService],
+  ],
+  controllers: [UploadController],
+  providers: [UploadService, UploadProcessor],
 })
 export class UploadModule { }

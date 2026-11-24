@@ -8,6 +8,8 @@ import {
   Body,
   UsePipes,
   Param,
+  HttpCode,
+  HttpStatus
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from './upload.service';
@@ -31,6 +33,7 @@ export class UploadController {
 
 //   uploadMultipleFiles
   @Post('multiple')
+  @HttpCode(HttpStatus.ACCEPTED)
   @UseInterceptors(FilesInterceptor('files', 10)) // Max 10 files per batch
   async uploadMultiple(
     @UploadedFiles() files: Express.Multer.File[],
