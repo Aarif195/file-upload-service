@@ -1,122 +1,98 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from 'react';
+import { UploadDropzone } from './components/UploadDropzone';
+import { uploadMultipleFiles, uploadSingleFile } from './services/uploadApi';
+import type { BatchEnqueueResponse, FileMetadata } from './types/upload';
 
-function App() {
-  const [count, setCount] = useState(0)
+export function App() {
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [singleResult, setSingleResult] = useState<FileMetadata | null>(null);
+  const [batchResult, setBatchResult] = useState<BatchEnqueueResponse | null>(
+    null,
+  );
+
+  const handleFilesAdded = (files: File[]) => {
+    setError(null);
+    setSelectedFiles((prev) => [...prev, ...files]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearFiles = () => {
+    setSelectedFiles([]);
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFiles.length) return;
+    setIsUploading(true);
+    setError(null);
+    setSingleResult(null);
+    setBatchResult(null);
+
+    try {
+      if (selectedFiles.length === 1) {
+        const res = await uploadSingleFile(selectedFiles[0]);
+        setSingleResult(res);
+      } else {
+        const res = await uploadMultipleFiles(selectedFiles);
+        setBatchResult(res);
+      }
+      setSelectedFiles([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
+    <main className="mx-auto max-w-2xl space-y-6 p-6">
+      <h1 className="text-xl font-bold text-slate-900">File Upload Service</h1>
+
+      <UploadDropzone
+        selectedFiles={selectedFiles}
+        onFilesAdded={handleFilesAdded}
+        onRemoveFile={handleRemoveFile}
+        onClearFiles={handleClearFiles}
+        disabled={isUploading}
+      />
+
+      {selectedFiles.length > 0 && (
         <button
           type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          onClick={handleUpload}
+          disabled={isUploading}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
         >
-          Count is {count}
+          {isUploading
+            ? 'Uploading...'
+            : selectedFiles.length === 1
+              ? 'Upload Single File'
+              : `Enqueue Batch (${selectedFiles.length} files)`}
         </button>
-      </section>
+      )}
 
-      <div className="ticks"></div>
+      {error && (
+        <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
+      )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      {singleResult && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+          Uploaded: {singleResult.originalName} ({singleResult.id})
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {batchResult && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+          Batch queued: {batchResult.batchId} ({batchResult.queuedJobs.length}{' '}
+          jobs)
+        </div>
+      )}
+    </main>
+  );
 }
 
-export default App
+export default App;

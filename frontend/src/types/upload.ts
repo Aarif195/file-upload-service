@@ -29,3 +29,26 @@ export interface BatchFilesResponse {
   count: number;
   data: FileMetadata[];
 }
+
+export type UploadItemStatus =
+  | 'pending'
+  | 'uploading'
+  | 'success'
+  | 'failed'
+  | 'cancelled';
+
+export interface UploadProgressInfo {
+  progress: number;
+  loadedBytes: number;
+  totalBytes: number;
+}
+
+export interface UploadQueueItem {
+  id: string;
+  file: File;
+  status: UploadItemStatus;
+  progress: number;
+  loadedBytes: number;
+  totalBytes: number;
+  error?: string;
+}
