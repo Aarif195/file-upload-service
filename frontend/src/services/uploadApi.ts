@@ -1,52 +1,44 @@
 import { type BatchEnqueueResponse, type BatchFilesResponse, type FileMetadata } from '../types/upload';
+import {
+  parseError,
+  sendFormDataWithProgress,
+  type UploadRequestOptions,
+} from '../utils/uploadHelpers';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-async function parseError(res: Response): Promise<string> {
-  try {
-    const data = await res.json();
-    return data?.message || `Request failed (${res.status})`;
-  } catch {
-    return `Request failed (${res.status})`;
-  }
-}
+export type { UploadRequestOptions };
 
 // uploadSingleFile
-export async function uploadSingleFile(file: File): Promise<FileMetadata> {
+export async function uploadSingleFile(
+  file: File,
+  options?: UploadRequestOptions,
+): Promise<FileMetadata> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const res = await fetch(`${BASE_URL}/upload/single`, {
-    method: 'POST',
-    body: formData,
-  });
-
-  if (!res.ok) {
-    throw new Error(await parseError(res));
-  }
-
-  return res.json();
+  return sendFormDataWithProgress<FileMetadata>(
+    `${BASE_URL}/upload/single`,
+    formData,
+    options,
+  );
 }
 
 // uploadMultipleFiles
 export async function uploadMultipleFiles(
   files: File[],
+  options?: UploadRequestOptions,
 ): Promise<BatchEnqueueResponse> {
   const formData = new FormData();
   files.forEach((file) => {
     formData.append('files', file);
   });
 
-  const res = await fetch(`${BASE_URL}/upload/multiple`, {
-    method: 'POST',
-    body: formData,
-  });
-
-  if (!res.ok) {
-    throw new Error(await parseError(res));
-  }
-
-  return res.json();
+  return sendFormDataWithProgress<BatchEnqueueResponse>(
+    `${BASE_URL}/upload/multiple`,
+    formData,
+    options,
+  );
 }
 
 // fetchAllFiles
