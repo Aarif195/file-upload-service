@@ -1,12 +1,14 @@
-import { useRef, useState, type DragEvent, type ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent, type DragEvent } from 'react';
+import type { UploadItemStatus, UploadQueueItem } from '../types/upload';
 
 // UploadDropzoneProps
 interface UploadDropzoneProps {
-  selectedFiles: File[];
+  items: UploadQueueItem[];
   onFilesAdded: (files: File[]) => void;
-  onRemoveFile: (index: number) => void;
-  onClearFiles: () => void;
-  disabled?: boolean;
+  onRemoveItem: (id: string) => void;
+  onCancelItem: (id: string) => void;
+  onClearItems: () => void;
+  isUploading?: boolean;
 }
 
 // formatBytes
@@ -27,13 +29,34 @@ function getTypeBadge(mimetype: string): string {
   return 'FILE';
 }
 
-// UploadDropzone
+function getStatusBadge(status: UploadItemStatus): {
+  label: string;
+  classes: string;
+} {
+  switch (status) {
+    case 'pending':
+      return { label: 'Pending', classes: 'bg-slate-100 text-slate-700' };
+    case 'uploading':
+      return { label: 'Uploading', classes: 'bg-blue-100 text-blue-700' };
+    case 'success':
+      return {
+        label: 'Success',
+        classes: 'bg-emerald-100 text-emerald-700',
+      };
+    case 'failed':
+      return { label: 'Failed', classes: 'bg-red-100 text-red-700' };
+    case 'cancelled':
+      return { label: 'Cancelled', classes: 'bg-amber-100 text-amber-800' };
+  }
+}
+
 export function UploadDropzone({
-  selectedFiles,
+  items,
   onFilesAdded,
-  onRemoveFile,
-  onClearFiles,
-  disabled = false,
+  onRemoveItem,
+  onCancelItem,
+  onClearItems,
+  isUploading = false,
 }: UploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -47,7 +70,7 @@ export function UploadDropzone({
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (!disabled) setIsDragging(true);
+    if (!isUploading) setIsDragging(true);
   };
 
   const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
@@ -58,7 +81,7 @@ export function UploadDropzone({
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    if (disabled) return;
+    if (isUploading) return;
     if (e.dataTransfer.files?.length) {
       onFilesAdded(Array.from(e.dataTransfer.files));
     }
@@ -74,7 +97,7 @@ export function UploadDropzone({
           isDragging
             ? 'border-blue-500 bg-blue-50'
             : 'border-slate-300 bg-slate-50 hover:border-slate-400'
-        } ${disabled ? 'opacity-60 pointer-events-none' : ''}`}
+        } ${isUploading ? 'pointer-events-none opacity-60' : ''}`}
       >
         <input
           ref={inputRef}
@@ -94,59 +117,93 @@ export function UploadDropzone({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          disabled={disabled}
+          disabled={isUploading}
           className="mt-4 inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
         >
           Choose Files
         </button>
       </div>
 
-      {selectedFiles.length > 0 && (
+      {items.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-sm font-semibold text-slate-800">
-              Queue Preview ({selectedFiles.length})
+              Upload Queue ({items.length})
             </span>
             <button
               type="button"
-              onClick={onClearFiles}
-              disabled={disabled}
-              className="text-xs font-medium text-red-600 hover:text-red-700 disabled:opacity-50 cursor-pointer"
+              onClick={onClearItems}
+              disabled={isUploading}
+              className="text-xs font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
             >
               Clear all
             </button>
           </div>
 
           <ul className="divide-y divide-slate-100">
-            {selectedFiles.map((file, idx) => (
-              <li
-                key={`${file.name}-${file.size}-${idx}`}
-                className="flex items-center justify-between py-2.5 text-sm"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-xs font-bold text-slate-700">
-                    {getTypeBadge(file.type)}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-slate-800">
-                      {file.name}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {file.type || 'unknown'} · {formatBytes(file.size)}
-                    </p>
-                  </div>
-                </div>
+            {items.map((item) => {
+              const badge = getStatusBadge(item.status);
+              const total = item.totalBytes || item.file.size;
 
-                <button
-                  type="button"
-                  onClick={() => onRemoveFile(idx)}
-                  disabled={disabled}
-                  className="mcursor-pointer l-3 text-xs font-medium text-slate-500 hover:text-red-600 disabled:opacity-50 cursor-pointer"
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
+              return (
+                <li key={item.id} className="space-y-2 py-3 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-xs font-bold text-slate-700">
+                        {getTypeBadge(item.file.type)}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-slate-800">
+                          {item.file.name}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatBytes(item.loadedBytes)} / {formatBytes(total)} ·{' '}
+                          {item.progress}%
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.classes}`}
+                      >
+                        {badge.label}
+                      </span>
+
+                      {item.status === 'uploading' ? (
+                        <button
+                          type="button"
+                          onClick={() => onCancelItem(item.id)}
+                          className="text-xs font-medium text-amber-700 hover:text-amber-900"
+                        >
+                          Cancel
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onRemoveItem(item.id)}
+                          disabled={isUploading}
+                          className="text-xs font-medium text-slate-500 hover:text-red-600 disabled:opacity-50"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full bg-blue-600 transition-all duration-150"
+                      style={{ width: `${item.progress}%` }}
+                    />
+                  </div>
+
+                  {item.error && (
+                    <p className="text-xs text-red-600">{item.error}</p>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

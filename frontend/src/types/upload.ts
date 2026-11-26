@@ -1,3 +1,8 @@
+export interface SingleUploadResponse {
+  message: string;
+  data: FileMetadata;
+}
+
 export interface FileMetadata {
   id: string;
   originalName: string;
@@ -51,4 +56,6 @@ export interface UploadQueueItem {
   loadedBytes: number;
   totalBytes: number;
   error?: string;
+  fileId?: string;
+  batchId?: string;
 }

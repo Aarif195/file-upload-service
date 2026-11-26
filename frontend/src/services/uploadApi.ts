@@ -1,4 +1,4 @@
-import { type BatchEnqueueResponse, type BatchFilesResponse, type FileMetadata } from '../types/upload';
+import { type BatchEnqueueResponse, type BatchFilesResponse, type FileMetadata, type SingleUploadResponse } from '../types/upload';
 import {
   parseError,
   sendFormDataWithProgress,
@@ -17,11 +17,20 @@ export async function uploadSingleFile(
   const formData = new FormData();
   formData.append('file', file);
 
-  return sendFormDataWithProgress<FileMetadata>(
+  // return sendFormDataWithProgress<FileMetadata>(
+  //   `${BASE_URL}/upload/single`,
+  //   formData,
+  //   options,
+  // );
+
+  const response = await sendFormDataWithProgress<SingleUploadResponse>(
     `${BASE_URL}/upload/single`,
     formData,
     options,
   );
+
+  return response.data;
+
 }
 
 // uploadMultipleFiles
