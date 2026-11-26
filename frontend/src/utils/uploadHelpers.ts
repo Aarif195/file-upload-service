@@ -93,3 +93,28 @@ export function sendFormDataWithProgress<T>(
         xhr.send(formData);
     });
 }
+
+export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+export const ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain',
+] as const;
+
+// validateUploadFile
+export function validateUploadFile(file: File): string | null {
+  if (!ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number])) {
+    return `Unsupported file type (${file.type || 'unknown'}).`;
+  }
+
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return 'File exceeds the 10 MB size limit.';
+  }
+
+  return null;
+}

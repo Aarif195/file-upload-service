@@ -6,6 +6,7 @@ import type {
   FileMetadata,
   UploadQueueItem,
 } from './types/upload';
+import { validateUploadFile } from './utils/uploadHelpers';
 
 function createQueueItem(file: File): UploadQueueItem {
   const id =
@@ -13,10 +14,12 @@ function createQueueItem(file: File): UploadQueueItem {
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
+const validationError = validateUploadFile(file);
+
   return {
     id,
     file,
-    status: 'pending',
+    status: validationError ? 'failed' : 'pending',
     progress: 0,
     loadedBytes: 0,
     totalBytes: file.size,
